@@ -1,0 +1,1601 @@
+package com.zte.ums.iqas.api.utils;
+
+import java.security.SecureRandom;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.log4j.Logger;
+
+/**
+ * <p>
+ * 文件名称: DateUnit.java
+ * </p>
+ * <p>
+ * 文件描述: 日期格式转换类
+ * </p>
+ * <p>
+ * 内容摘要: 在这里,同一个日期有三种格式: 1.毫秒; 2.Java里的日期类(Date); 3.字符串,字符串里又分两种: (3.1).显示格式:它用分隔号很明显地把日期里的每个元素分隔开来,例如:1982-09-27
+ * 12:00(yyyy-MM-dd HH:mm); (3.2).简短格式:它没有分隔符号,而是把日期里的所有元素按顺序排列在一起,例如:198209271200(yyyyMMddHHmm);
+ * 在这个类里主要提供了在以上三种格式之间的转换.
+ * </p>
+ * <p>
+ * 其他说明: jdk本身提供的SimpleDateFormat是非线程安全的，所以这里不使用。
+ * </p>
+ * <p>
+ */
+public class DateUtil
+{
+    /** 显示时间：日期 */
+    public static final int DATE = 0;
+
+    /** 显示时间：时间 */
+    public static final int TIME = 1;
+
+    /** 显示时间：日期+时间 */
+    public static final int DATETIME = 2;
+
+    /** 显示时间：日期+时间 到时分秒 */
+    public static final int DATETIMEFULL = 3;
+
+    /** 显示时间：日期+时间 到时分,秒,毫秒 */
+    public static final int MILLISEC = 4;
+
+    /** 时间格式:长 */
+    public static final int FORMAT_DISPLAY = 0; // 对应STR_DISPLAY_FORMATS
+
+    /** 时间格式:短 */
+    public static final int FORMAT_BRIEF = 1; // 对应STR_BRIEF_FORMATS
+
+    private final static String[] STR_DISPLAY_FORMATS = new String[] { "yyyy-MM-dd", "HH:mm", "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss.SSS" };
+
+    private final static String[] STR_BRIEF_FORMATS = new String[] { "yyyyMMdd", "HHmm", "yyyyMMddHHmm",
+            "yyyyMMddHHmmss", "yyyyMMddHHmmssSSS" };
+
+    /** 调试打印 */
+    private static final Logger logger = Logger.getLogger(DateUtil.class);
+
+    /**
+     * 将毫秒转换成字符串
+     * 
+     * @param aMilliseconds
+     *            long
+     * @param intDateTimeType
+     *            int 日期类型
+     * @param intFormatType
+     *            int 格式类型
+     * @return String
+     */
+    public static String milliseconds2StrFormat(long aMilliseconds, int intDateTimeType, int intFormatType)
+    {
+        return javaDate2StrFormat(new Date(aMilliseconds), intDateTimeType, intFormatType);
+    }
+
+    public static String getCurrentTime(int intDateTimeType, int intFormatType)
+    {
+        Date date = new Date();
+        return javaDate2StrFormat(date, intDateTimeType, intFormatType);
+    }
+
+    /**
+     * 方法名称：getCurrentTime
+     * <p>
+     * 方法功能：获取当前时间,格式为yyyy-MM-dd hh:mm:ss
+     * <p>
+     * 参数说明:
+     * <p>
+     * 
+     * @return String 格式为yyyy-MM-dd hh:mm:ss
+     */
+    public static String getCurrentTime()
+    {
+        return getCurrentTime(DateUtil.DATETIMEFULL, DateUtil.FORMAT_DISPLAY);
+    }
+    /**
+    * method：getCurrentDay
+    * <p>
+    * function：getCurrentDay,获取当前天，格式yyyyMMdd
+    * <p>
+    *     @return
+    *     String
+    * <p>
+    */
+    public static String getCurrentDay()
+    {
+        return getCurrentTime(DateUtil.DATE, DateUtil.FORMAT_BRIEF);
+    }
+
+    public static Timestamp getCurrentTimestamp()
+    {
+        return new Timestamp(new java.util.Date().getTime());
+    }
+
+    public static String javaDateFromTimestamp(Timestamp timestamp)
+    {
+        if (timestamp != null)
+        {
+            Date dt = new Date(timestamp.getTime());
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(dt);
+        }
+        else
+        {
+            return "";
+        }
+
+    }
+
+    /**
+     * 将Java Date类转换成字符串
+     * 
+     * @param date
+     *            Date
+     * @param intDateTimeType
+     *            int 日期类型
+     * @param intFormatType
+     *            int 格式类型
+     * @return String
+     */
+    public static String javaDate2StrFormat(Date date, int intDateTimeType, int intFormatType)
+    {
+        String strRtnDate = "";
+        if (date != null)
+        {
+            // 判断是'显示日期'还是'简短日期'来决定采用那种格式
+            String[] strFormat = (intFormatType == FORMAT_DISPLAY) ? STR_DISPLAY_FORMATS : STR_BRIEF_FORMATS;
+            strRtnDate = DateFormatUtils.format(date, strFormat[intDateTimeType]);
+        }
+        return strRtnDate;
+    }
+
+    /**
+     * 将显示格式转换为简短格式
+     * 
+     * @param aUserDateTime
+     *            String
+     * @param intDateTimeType
+     *            int 日期类型
+     * @return String
+     */
+    public static String displayFormat2BriefFormat(String aUserDateTime, int intDateTimeType)
+    {
+        Date date = strFormat2JavaDate(aUserDateTime, intDateTimeType, FORMAT_DISPLAY);
+        return javaDate2StrFormat(date, intDateTimeType, FORMAT_BRIEF);
+    }
+
+    /**
+     * 把简短格式转换为显示格式
+     * 
+     * @param aStdDateTime
+     *            String
+     * @param intDateTimeType
+     *            int 日期类型
+     * @return String
+     */
+    public static String briefFormat2DisplayFormat(String aStdDateTime, int intDateTimeType)
+    {
+        Date date = strFormat2JavaDate(aStdDateTime, intDateTimeType, FORMAT_BRIEF);
+        return javaDate2StrFormat(date, intDateTimeType, FORMAT_DISPLAY);
+    }
+
+    /**
+     * 根据给定的'日期时间类型'和'格式类型',将日期字符串转换成JavaDate对象, 日期格式有误或出异常时返回null.
+     * 
+     * @param strDateTime
+     *            String
+     * @param intDateTimeType
+     *            int 日期类型
+     * @param intFormatType
+     *            int 格式类型
+     * @return Date
+     */
+    public static Date strFormat2JavaDate(String strDateTime, int intDateTimeType, int intFormatType)
+    {
+        if (!checkFormat(strDateTime, intFormatType))
+        {
+            logger.warn("Error date time string:" + strDateTime);
+            return null;
+        }
+
+        // 判断是'显示日期'还是'简短日期'来决定日期字符串的最大长度
+        int intMaxLength = (intFormatType == FORMAT_DISPLAY) ? 16 : 12;
+        // 判断是'显示日期'还是'简短日期'来决定采用那种格式
+        String[] strFormat = (intFormatType == FORMAT_DISPLAY) ? STR_DISPLAY_FORMATS : STR_BRIEF_FORMATS;
+        // 判断是不是"日期+时间"的完整格式,有时是提供完整格式但只取其中的一部分(日期或时间)
+        int intParseType = (strDateTime.length() == intMaxLength) ? DATETIME : intDateTimeType;
+        try
+        {
+            Date date = parseDate(strDateTime, strFormat[intParseType]);
+            return date;
+        }
+        catch (ParseException ex)
+        {
+            logger.error("The string variable 'strDateTime' is not a legal date format!", ex);
+            return null;
+        }
+    }
+
+    private static Date parseDate(String str, String parsePatterns) throws ParseException
+    {
+        if (str == null || parsePatterns == null)
+        {
+            throw new IllegalArgumentException("Date and Patterns must not be null");
+        }
+        SimpleDateFormat parser = new SimpleDateFormat(parsePatterns);
+
+        Date date = parser.parse(str);
+        if (date != null)
+        {
+            return date;
+        }
+
+        throw new ParseException("Unable to parse the date: " + str, -1);
+    }
+
+    /**
+     * 将字符串格式的日期转换成毫秒, 如果字符串是不正确的则返回-1
+     * 
+     * @param strDateTime
+     *            String
+     * @param intDateTimeType
+     *            int 日期类型
+     * @param intFormatType
+     *            int 格式类型
+     * @return long
+     */
+    public static long strFormat2Milliseconds(String strDateTime, int intDateTimeType, int intFormatType)
+    {
+        long rtnMilliseconds = -1;
+        Date date = strFormat2JavaDate(strDateTime, intDateTimeType, intFormatType);
+        if (date != null)
+        {
+            rtnMilliseconds = date.getTime();
+        }
+
+        return rtnMilliseconds;
+    }
+
+    /**
+     * 获取当前时间的字符串形式
+     * 
+     * @param intDateTimeType
+     *            int 日期类型
+     * @param intFormatType
+     *            int 格式类型
+     * @return String
+     */
+    public static String getStrFormat(int intDateTimeType, int intFormatType)
+    {
+        return javaDate2StrFormat(new Date(), intDateTimeType, intFormatType);
+    }
+
+    /**
+     * 检查日期字符串的长度是否符合要求
+     * 
+     * @param strStdDateTime
+     *            String
+     * @param intFormatType
+     *            int
+     * @return boolean
+     */
+    private static boolean checkFormat(String strStdDateTime, int intFormatType)
+    {
+        if (strStdDateTime == null)
+        {
+            return false;
+        }
+
+        int intMaxLength;
+        int intMinLength;
+        if (intFormatType == FORMAT_DISPLAY)
+        {
+            intMaxLength = STR_DISPLAY_FORMATS[MILLISEC].length();
+            intMinLength = STR_DISPLAY_FORMATS[TIME].length();
+        }
+        else
+        {
+            intMaxLength = STR_BRIEF_FORMATS[MILLISEC].length();
+            intMinLength = STR_BRIEF_FORMATS[TIME].length();
+        }
+
+        if (strStdDateTime.length() < intMinLength || strStdDateTime.length() > intMaxLength)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public static long getReferTime()
+    {
+        Calendar referCal = Calendar.getInstance();
+        referCal.clear();
+        referCal.set(2008, 0, 0, 0, 0, 0);
+        Date referDate = referCal.getTime();
+        return referDate.getTime();
+    }
+
+    public static synchronized long generateSeries()
+    {
+        long series = System.currentTimeMillis() - getReferTime();
+        // series = series + Math.round(Math.random() * 10000);
+        series = series + Math.round(new SecureRandom().nextDouble() * 10000);
+
+        return series;
+
+    }
+
+    /**
+     * 方法名称：getCurrentDate
+     * <p>
+     * 方法功能：获取当前时间
+     * <p>
+     * 参数说明:
+     * <p>
+     * <p>
+     * 返回：Date 返回时间类型 yyyy-MM-dd HH:mm:ss
+     */
+    public static Date getCurrentDate()
+    {
+        Date currentTime = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = formatter.format(currentTime);
+        return strFormat2JavaDate(dateString, 3, 0);
+    }
+
+    /**
+     * method：getDate
+     * <p>
+     * function：getDate,format is "yyyyMMddHHmmss"
+     * <p>
+     * 
+     * @param strDate
+     * @return Date
+     */
+    public static Date getDate(String strDate)
+    {
+        if (StringUtils.isBlank(strDate))
+        {
+            return null;
+        }
+        else
+        {
+            return strFormat2JavaDate(strDate, DateUtil.DATETIMEFULL, DateUtil.FORMAT_BRIEF);
+        }
+    }
+
+    /**
+     * method：getTimestamp
+     * <p>
+     * function：getTimestamp,date转Timestamp
+     * <p>
+     * 
+     * @param date
+     * @return Timestamp
+     */
+    public static Timestamp getTimestamp(Date date)
+    {
+        if (date == null)
+        {
+            return null;
+        }
+        else
+        {
+            return new Timestamp(date.getTime());
+        }
+    }
+
+    /**
+     * 将时间以毫秒为单位的转化为yyyy-MM-dd HH:mm:ss的格式
+     * 
+     * @param ms
+     * @return time
+     */
+    public static String standardTime(long ms)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String time = formatter.format(new Date(ms));
+        return time;
+    }
+
+    /**
+     * 调试方法
+     * 
+     * @param args
+     *            String[]
+     */
+
+    /*
+     * public static void main(String[] args) {
+     * 
+     * Timestamp a = DateUtil.getTimestamp(new Date()); System.out.println(a); }
+     */
+    /**
+     * 根据给定日期获取几分钟后的时间
+     * 
+     * @param date1
+     *            ,DayToBePlus
+     * @return yyyy-MM-dd HH:mm:ss格式
+     */
+    public static String plusMin(String date, int MinToBePlus)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date d = null;
+        synchronized(formatter){
+        	try
+            {
+                d = formatter.parse(date);
+            }
+            catch (ParseException e)
+            {
+                e.printStackTrace();
+            }
+            Calendar c = Calendar.getInstance();
+            c.setTime(d);
+            c.add(Calendar.MINUTE, MinToBePlus); // 表示加了几天
+            return formatter.format(c.getTime());
+        }
+        
+    }
+    
+    
+    /**
+     * 根据给定日期获取几天后的时间
+     * 
+     * @param date1
+     *            ,DayToBePlus
+     * @return yyyy-MM-dd HH:mm:ss格式
+     */
+    public static String plusDay(String date, int dayToBePlus)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date d = null;
+        try
+        {
+            d = formatter.parse(date);
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.add(Calendar.DATE, dayToBePlus); // 表示加了几天
+        return formatter.format(c.getTime());
+    }
+
+    
+    /**
+     * <p>
+     * 功能描述：根据给定日期获取几秒钟后的时间
+     * </p>
+     * 
+     * @param date
+     * @param seconds
+     * @return
+     */
+    public static String plusSeconds(String date, int seconds)
+    {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date d = null;
+        try
+        {
+            d = format.parse(date);
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.add(Calendar.SECOND, seconds);
+        return format.format(c.getTime());
+    }
+
+    /**
+     * 将时间格式由yyyy-MM-dd HH:mm:ss转化为yyyyMMddHHmm
+     * 
+     * @param StandardDate
+     * @return
+     */
+    public static String toSimpleDate(String standardDate)
+    {
+        if (standardDate == null || standardDate.length() == 0)
+        {
+            return null;
+        }
+        for (int i = 0; i < standardDate.length(); i++)
+        {
+            char t = standardDate.charAt(i);
+            // 如果不符合时间规范
+            if (t != '-' && t != ':' && t != ' ' && (t < 0x30 || t > 0x39))
+            {
+                return null;
+            }
+        }
+        standardDate = standardDate.replaceAll("[-: ]", "");
+        if (standardDate.length() > 12)
+        {
+            standardDate = standardDate.substring(0, 12);}
+        return standardDate;
+    }
+
+    /**
+     * 规整时间 yyyyMMddHHmm 到 yyyy-MM-dd HH:mm:ss
+     * 
+     * @param time
+     * @return
+     */
+    public static String formatTime(String time)
+    {
+        if (time == null)
+            return null;
+        StringBuffer formatTime = new StringBuffer();
+        try
+        {
+            for (int i = 0; i < time.length(); i++)
+            {
+                char t = time.charAt(i);
+                // 如果不是数字
+                if (t < 0x30 || t > 0x39)
+                    return null;
+                formatTime.append(t);
+                switch (i)
+                {
+                    case 3:
+                    case 5:
+                        formatTime.append("-");
+                        break;
+                    case 7:
+                        formatTime.append(" ");
+                        break;
+                    case 9:
+                    case 11:
+                        formatTime.append(":");
+                        break;
+                    default:
+                        break;
+                }
+
+            }
+            if (time.length() == 12)
+                formatTime.append("00");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+        return formatTime.toString();
+    }
+
+    /**
+     * yyyy-MM-dd 转 yyyyMMdd
+     */
+    public static String formatDate(String date)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat formatter2 = new SimpleDateFormat("yyyyMMdd");
+        String d = "";
+        try
+        {
+            d = formatter2.format(formatter.parse(date));
+        }
+        catch (ParseException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return d;
+    }
+
+    /**
+     * <p>
+     * 功能描述：yyyyMMdd 转 yyyy-MM-dd
+     * </p>
+     * 
+     * @param day
+     * @return
+     */
+    public static String formatDay(String day)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat formatter2 = new SimpleDateFormat("yyyyMMdd");
+        String newformatDay = "";
+        try
+        {
+            newformatDay = formatter.format(formatter2.parse(day));
+        }
+        catch (ParseException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return newformatDay;
+    }
+
+    /**
+     * <p>
+     * 功能描述：取最近的周期上报时间点（5分钟倍数，若跨天，则取当天0点）
+     * </p>
+     * 
+     * @param pointTime
+     *            指定时间点（yyyy-MM-dd HH:mm:ss）
+     * @param interval
+     *            往前推的时间间隔（分钟数）
+     * @return （HH:mm:ss）
+     */
+    public static String getLastPeriodTime(String pointTime, int interval)
+    {
+        String time = null;
+
+        try
+        {
+            Date pointDate = null;
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            // 转换为时间对象，为空则取当前时间
+            if (CommonTools.isBlank(pointTime))
+            {
+                pointDate = new Date();
+            }
+            else
+            {
+                pointDate = sdf.parse(pointTime);
+            }
+
+            SimpleDateFormat resSdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+            // 指定的时间点日历对象
+            Calendar curCal = Calendar.getInstance(Locale.getDefault());
+            curCal.setTime(pointDate);
+
+            // 用于检索的日历对象
+            Calendar cal = Calendar.getInstance(Locale.getDefault());
+            cal.setTime(pointDate);
+            // 先减去时间间隔
+            cal.add(Calendar.MINUTE, interval * -1);
+            // 若已跨天，则取当天的0点
+            if (curCal.get(Calendar.DAY_OF_MONTH) != cal.get(Calendar.DAY_OF_MONTH))
+            {
+                return "00:00:00";
+            }
+            // 秒设为0
+            cal.set(Calendar.SECOND, 0);
+            // 分钟数
+            int minute = cal.get(Calendar.MINUTE);
+            while (minute % 5 > 0)
+            {
+                cal.add(Calendar.MINUTE, -1);
+                minute = cal.get(Calendar.MINUTE);
+            }
+            time = resSdf.format(cal.getTime());
+
+        }
+        catch (Exception e)
+        {
+            logger.error("@getLastPeriodTime date operating exception=" + e.getMessage(), e);
+        }
+
+        return time;
+    }
+
+    /**
+     * 计算当前时间 多少天前后的日期 yyyyMMdd
+     * 
+     * @param dayToBePlus
+     * @return
+     */
+
+    public static String plusDay(int dayToBePlus)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_MONTH, dayToBePlus); // 表示加了几天
+        return formatter.format(c.getTime());
+    }
+
+    /**
+     * 计算当前时间 多少天前后的日期 yyyyMMdd
+     * 
+     * @param dayToBePlus
+     * @return
+     */
+
+    public static String plusDay(int dayToBePlus, String format)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat(format);
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DAY_OF_MONTH, dayToBePlus); // 表示加了几天
+        return formatter.format(c.getTime());
+    }
+
+    /**
+     * <p>
+     * 功能描述：根据开始日期和结束日期计算中间所有日期合集，包括起始和结束日期 （传进来的参数不能为null）
+     * </p>
+     * 
+     * @param starttime
+     *            "yyyy-MM-dd"格式
+     * @param endtime
+     *            "yyyy-MM-dd"格式
+     * @return
+     * @throws ParseException
+     */
+    public static List<Date> getDatesBetweenTwoDate(String starttime, String endtime) throws ParseException
+    {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Date startdate = format.parse(starttime);
+        Date enddate = format.parse(endtime);
+        List<Date> lDate = new ArrayList<Date>();
+        lDate.add(startdate);// 把开始时间加入集合
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+        // 使用给定的 Date 设置此 Calendar 的时间
+        cal.setTime(startdate);
+        boolean bContinue = true;
+        while (bContinue)
+        {
+            // 根据日历的规则，为给定的日历字段添加或减去指定的时间量
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            // 测试此日期是否在指定日期之后
+            if (enddate.after(cal.getTime()))
+            {
+                lDate.add(cal.getTime());
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (!startdate.equals(enddate))
+        {
+            lDate.add(enddate);// 把结束时间加入集合
+        }
+        return lDate;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取两个日期之间的所有日期字符串（yyyyMMdd）列表（含起止时间）
+     * </p>
+     * 
+     * @param startDate
+     *            开始日期，格式：yyyy-MM-dd
+     * @param endDate
+     *            截至日期，格式：yyyy-MM-dd
+     * @return 日期列表，格式：yyyyMMdd
+     */
+    public static List<String> getDateStrList(String startDate, String endDate)
+    {
+        ArrayList<String> dateList = new ArrayList<String>();
+        try
+        {
+            // 格式化
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            // 截至日期默认是当日
+            String today = sdf.format(new Date());
+            if (CommonTools.isBlank(endDate))
+            {
+                endDate = today;
+            }
+            // 开始日期为空或大于截至日期，则取截至日期
+            if (CommonTools.isBlank(startDate) || startDate.compareTo(endDate) > 0)
+            {
+                startDate = endDate;
+            }
+            // 两者相等，则添加
+            if (startDate.equals(endDate))
+            {
+                dateList.add(startDate.replaceAll("-", ""));
+            }
+            else
+            {
+                // 循环添加
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(sdf.parse(startDate));
+                String date = startDate;
+                while (date.compareTo(endDate) < 0)
+                {
+                    dateList.add(date.replaceAll("-", ""));
+                    cal.add(Calendar.DATE, 1);
+                    date = sdf.format(cal.getTime());
+                }
+                dateList.add(endDate.replaceAll("-", ""));
+            }
+
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getDateStrList exception=" + e.getMessage(), e);
+        }
+
+        return dateList;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取上一小时0分0秒的字符串（yyyy-MM-dd HH:mm:ss）
+     * </p>
+     * 
+     * @param dateTime
+     *            参照时间（yyyy-MM-dd HH:mm:ss）
+     * @return
+     */
+    public static String getPreHour(String dateTime)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            if (CommonTools.isBlank(dateTime))
+            {
+                dateTime = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(dateTime));
+            cal.add(Calendar.HOUR_OF_DAY, -1);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            return sdf.format(cal.getTime());
+
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastHour exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取上一小时0分0秒的字符串（HH:mm:ss）
+     * </p>
+     * 
+     * @param dateTime
+     *            参照时间（yyyy-MM-dd HH:mm:ss）
+     * @return
+     */
+    public static String getPreHourOnly(String dateTime)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+            if (CommonTools.isBlank(dateTime))
+            {
+                dateTime = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(dateTime));
+            cal.add(Calendar.HOUR_OF_DAY, -1);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            return sdf.format(cal.getTime());
+
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastHour exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取昨天日期的字符串（yyyy-MM-dd）
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getYestoday(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            cal.add(Calendar.DATE, -1);
+            return sdf.format(cal.getTime());
+
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastDate exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取上周日期的字符串（yyyy-MM-dd）
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getLastWeek(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            cal.add(Calendar.DATE, -7);
+            return sdf.format(cal.getTime());
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastDate exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    /**
+     * <p>
+     * 功能描述：获取上月日期的字符串（yyyy-MM-dd）
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getLastMonth(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            cal.add(Calendar.MONTH, -1);
+            return sdf.format(cal.getTime());
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastDate exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+    
+    
+    /**
+     * <p>
+     * 功能描述：获取本周日（每周第一天）
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getSunday(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+            Date sunday = getSundayDate(sdf.parse(date));
+
+            return sdf.format(sunday);
+         /*   if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
+            {
+                return date;
+            }
+            else
+            {
+                while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY)
+                {
+                    cal.add(Calendar.DATE, -1);
+                }
+                return sdf.format(cal.getTime());
+            }*/
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getSunday exception=" + e.getMessage(), e);
+            return null;
+        }     
+    }
+
+    /**
+    * method：getSundayDate
+    * <p>
+    * function：getSundayDate,get the last sunday before the input date
+    * <p>
+    *     @param input
+    *     @return
+    *     Date
+    * <p>
+    * author：10067337
+    * <p>
+    */
+    public static Date getSundayDate(Date input)
+    {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(input);
+        int offset = Calendar.SUNDAY - cal.get(Calendar.DAY_OF_WEEK);    
+        cal.add(Calendar.DATE, offset);
+        return cal.getTime();
+    }  
+
+    /**
+     * <p>
+     * 功能描述：获取本周六（每周最后一天）
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getSaturday(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            int offset = Calendar.SATURDAY - cal.get(Calendar.DAY_OF_WEEK);    
+            cal.add(Calendar.DATE, offset);
+            return sdf.format(cal.getTime());
+            
+           /* if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY)
+            {
+                return date;
+            }
+            else
+            {
+                while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SATURDAY)
+                {
+                    cal.add(Calendar.DATE, 1);
+                }
+                return sdf.format(cal.getTime());
+            }*/
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getSaturday exception=" + e.getMessage(), e);
+            return null;
+        }       
+    }
+
+    /**
+     * <p>
+     * 功能描述：取当月第一天日期
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getFirstDayOfMonth(String date)
+    {
+        try
+        {
+            if (CommonTools.isBlank(date))
+            {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                date = sdf.format(new Date());
+            }
+
+            return date.substring(0, 8) + "01";
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getFirstDayOfMonth exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取当月最后一天
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getLastDayOfMonth(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            // 取下一个月第一天，再减一天，得到本月最后一天（省去判断大小月、润平年的情况）
+            cal.add(Calendar.MONTH, 1);
+            cal.set(Calendar.DATE, 1);
+            cal.add(Calendar.DATE, -1);
+            return sdf.format(cal.getTime());
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getLastDayOfMonth exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取本季度第一天
+     * </p>
+     * 
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getFirstDayOfQuarter(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            cal.set(Calendar.DATE, 1);
+            int month = cal.get(Calendar.MONTH);
+            int lnum = month % 3;
+            // 1、 4、 7、 10四个月，就是每季度第一个月，其他月份需要减去相应月数
+            if (lnum > 0)
+            {
+                cal.add(Calendar.MONTH, lnum);
+            }
+            return sdf.format(cal.getTime());
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getFirstDayOfQuarter exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * 功能描述：获取本季度最后一天
+     * </p>
+     * @param date
+     *            参照日期（yyyy-MM-dd）
+     * @return
+     */
+    public static String getLastDayOfQuarter(String date)
+    {
+        try
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (CommonTools.isBlank(date))
+            {
+                date = sdf.format(new Date());
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(sdf.parse(date));
+            int month = cal.get(Calendar.MONTH);
+            int lnum = month % 3;
+            // 3、 6、 9、 12四个月，就是每季度最后一个月，其他月份需要加上相应月数
+            if (lnum < 2)
+            {
+                cal.add(Calendar.MONTH, lnum);
+            }
+            month = cal.get(Calendar.MONTH);
+            if (month == 2 || month == 11)
+            {
+                cal.set(Calendar.DATE, 31);
+            }
+            else
+            {
+                cal.set(Calendar.DATE, 30);
+            }
+            return sdf.format(cal.getTime());
+        }
+        catch (Exception e)
+        {
+            logger.error("DateUtil.getFirstDayOfQuarter exception=" + e.getMessage(), e);
+        }
+        return null;
+    }
+
+   
+    
+	
+    public static String getEsAggTimevip(String timeMs)
+    {
+        String timeFormat = "";
+        if (StringUtils.isBlank(timeMs))
+        {
+            return timeFormat;
+        }
+        if (timeMs.indexOf("-") > 0)
+        {
+            return timeMs;
+        }
+        try
+        {
+            Date date = new Date(Long.parseLong(timeMs));
+            SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          
+            timeFormat = sdf_utc.format(date);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return timeFormat;
+    }
+    
+    
+    public static String getEsAggTime(String timeMs)
+    {
+        String timeFormat = "";
+        if (StringUtils.isBlank(timeMs))
+        {
+            return timeFormat;
+        }
+        if (timeMs.indexOf("-") > 0)
+        {
+            return timeMs;
+        }
+        try
+        {
+            Date date = new Date(Long.parseLong(timeMs));
+            SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            sdf_utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+            timeFormat = sdf_utc.format(date);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return timeFormat;
+    }
+    
+    
+    
+    /** <p>功能描述：获取当前规整时间，可以前后调整period分钟</p>
+     *  
+     * @param period  可负可正
+     * @return
+     */
+    public static String getPutInOrderTime(int period)
+    {
+    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		int minute = cal.get(Calendar.MINUTE);
+		minute = minute / 5 * 5;
+		cal.set(Calendar.MINUTE, minute);
+		cal.add(Calendar.MINUTE, period);
+		cal.set(Calendar.SECOND,0 );
+		Date nowdate = cal.getTime();  
+	    String nowtime = sdf.format(nowdate);
+	    
+	    return nowtime;
+    }
+    
+    // add by lili 2016-09-13
+    public static String getDiff(String fromDate, String toDate){
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  
+        String time = "";
+        try {  
+            //前的时间   
+            Date fd = df.parse(fromDate);  
+            //后的时间  
+            Date td = df.parse(toDate);  
+            //两时间差,精确到毫秒   
+            long diff = td.getTime() - fd.getTime();  
+            long day = diff / 86400000;                         //以天数为单位取整  
+            long hour= diff % 86400000 / 3600000;               //以小时为单位取整  
+            long min = diff % 86400000 % 3600000 / 60000;       //以分钟为单位取整  
+            long seconds = diff % 86400000 % 3600000 % 60000 / 1000;   //以秒为单位取整  
+            //天时分秒  
+            String language =  CommonTools.getLanguage();
+            if(language.startsWith("zh"))
+    		{
+            	if(day!=0)
+                {
+                	time = day+"天"+hour+"小时"+min+"分"+seconds+"秒";
+                }
+                else if(hour!=0)
+                {
+                	time = hour+"小时"+min+"分"+seconds+"秒";
+                }
+                else if(min!=0)
+                {
+                	time = min+"分"+seconds+"秒";
+                }
+                else{
+                	time = seconds+"秒";
+                }
+    		}
+            else{
+            	if(day!=0)
+                {
+                	time = day+"days"+hour+"hours"+min+"minutes"+seconds+"seconds";
+                }
+                else if(hour!=0)
+                {
+                	time = hour+"hours"+min+"minutes"+seconds+"seconds";
+                }
+                else if(min!=0)
+                {
+                	time = min+"minutes"+seconds+"seconds";
+                }
+                else{
+                	time = seconds+"seconds";
+                }
+            }
+        } catch (ParseException e) {  
+            e.printStackTrace();  
+        }  
+        
+        return time;
+    }
+    
+    
+    /**
+    * method：getTimeDiff
+    * <p>
+    * function：时间差计算 返回秒数
+    * <p>
+    *     @param startTime  yyyy-MM-dd HH:mm:ss
+    *     @param endTime   yyyy-MM-dd HH:mm:ss
+    *     @return
+    *     long
+    * <p>
+    * <p>
+    */
+    public static long getTimeDiff(String startTime, String endTime)
+    {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        long diffSeconds = 0;
+        try
+        {
+            // 前的时间
+            Date startDate = df.parse(startTime);
+            // 后的时间
+            Date endDate = df.parse(endTime);
+            // 两时间差,精确到毫秒
+            long diff = endDate.getTime() - startDate.getTime();
+            diffSeconds = diff / 1000; // 以秒为单位取整
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+
+        return diffSeconds;
+    }
+    /** <p>功能描述：根据传入时间获取UTC毫秒</p>
+     *  
+     * @param time
+     * @return
+     */
+    public static long getUTCTime(String time)
+    {
+    	SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf_utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+        long mseconds = 0L;
+        try {
+			Date date = sdf_utc.parse(time);
+			mseconds = date.getTime();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return mseconds;
+    }
+    
+    public static String getUTCTimeStr(String time)
+	{
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf_utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String utcTime = time;
+        try {
+			Date date = sdf.parse(time);
+			utcTime = sdf_utc.format(date);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return utcTime;
+	  }
+    
+    /**
+    * method：getTimebyMillisecond
+    * <p>
+    * function：由毫秒数获取时间 取当前时区
+    * <p>
+    *     @param timeMs
+    *     @return
+    *     String
+    * <p>
+    * <p>
+    */
+    public static String getTimebyMillisecond(long timeMs)
+    {
+        String timeFormat = "";
+     
+        try
+        {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(timeMs);
+           
+            Date date = calendar.getTime();  
+            SimpleDateFormat sdf= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          
+            timeFormat = sdf.format(date);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return timeFormat;
+    }
+    
+    
+    public static String formatDate(String date, String inFormatter, String outFormatter)
+    {
+        SimpleDateFormat formatter = new SimpleDateFormat(inFormatter);
+        SimpleDateFormat formatter2 = new SimpleDateFormat(outFormatter);
+        String d = "";
+        try
+        {
+            d = formatter2.format(formatter.parse(date));
+        }
+        catch (ParseException e)
+        {
+            // TODO Auto-generated catch block
+            logger.error("Parse " +date +  "error! ", e);
+        }
+        return d;
+    }
+    
+    public static String local2UTC(String inputTime, String inputFormat, String outFormat) {
+		String outTime = inputTime;
+		try {
+
+			//System.out.println(inputTime);
+			SimpleDateFormat inSdf = new SimpleDateFormat(inputFormat);
+			SimpleDateFormat outSdf = new SimpleDateFormat(outFormat);
+			Date inDate = inSdf.parse(inputTime);
+			Calendar cal = Calendar.getInstance();
+
+			cal.setTime(inDate);
+			// 取得时间偏移量：
+			int zoneOffset = cal.get(java.util.Calendar.ZONE_OFFSET);
+			// 取得夏令时差：
+			int dstOffset = cal.get(java.util.Calendar.DST_OFFSET);
+			cal.add(Calendar.MILLISECOND, -(zoneOffset + dstOffset));
+			outTime = outSdf.format(cal.getTime());
+			//System.out.println(outTime);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return outTime;
+	}
+    
+    /**
+     * method：getUTCTimebyMillisecond
+     * <p>
+     * function：由毫秒数获取时间 取当前时区然会转化成UTC时间
+     * <p>
+     *     @param timeMs
+     *     @return
+     *     String
+     * <p>
+     * <p>
+     */
+     public static String getUTCTimebyMillisecond(long timeMs)
+     {
+         String timeFormat = "";
+      
+         try
+         {            
+        	 Calendar calendar = Calendar.getInstance();
+             calendar.setTimeInMillis(timeMs);
+             Date date = calendar.getTime(); 
+     		 SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyyMMddHHmmss");
+             sdf_utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+             timeFormat = sdf_utc.format(date);             	         	       	 
+         }
+         catch (Exception e)
+         {
+             e.printStackTrace();
+         }
+         return timeFormat;
+     }
+     public static String getUTCTimeDaybyMisecond(long timeMs)
+     {
+         String timeFormat = "";
+      
+         try
+         {            
+        	 Calendar calendar = Calendar.getInstance();
+             calendar.setTimeInMillis(timeMs);
+             Date date = calendar.getTime(); 
+     		 SimpleDateFormat sdf_utc = new SimpleDateFormat("yyyyMMdd");
+             sdf_utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+             timeFormat = sdf_utc.format(date);             	         	       	 
+         }
+         catch (Exception e)
+         {
+             e.printStackTrace();
+         }
+         return timeFormat;
+     }
+     
+     public static String getDaybyCurrentTime(int dayToPlus, String formatStr) {
+
+ 		if (formatStr == null || formatStr.length() < 1) {
+ 			formatStr = "yyyy-MM-dd";
+ 		}
+ 		Date currentDate = new Date();
+ 		Calendar cal = Calendar.getInstance();
+ 		cal.setTime(currentDate);
+ 		cal.add(Calendar.DAY_OF_MONTH, dayToPlus);
+
+ 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(formatStr);
+
+ 		String dayAgo = simpleDateFormat.format(cal.getTime());
+
+ 		return dayAgo;
+
+ 	}
+     
+     /**
+ 	 * 日期格式字符串转换成unix UTC时间戳
+ 	 *
+ 	 * @param dateStr
+ 	 *            字符串日期
+ 	 * @param format
+ 	 *            如：yyyy-MM-dd HH:mm:ss
+ 	 *
+ 	 * @return
+ 	 */
+ 	public static String date2TimeStamp(String dateStr, String format) {
+ 		try {
+ 			SimpleDateFormat sdf = new SimpleDateFormat(format);
+ 			return String.valueOf(sdf.parse(dateStr).getTime() / 1000);
+ 		} catch (Exception e) {
+ 			e.printStackTrace();
+ 		}
+ 		return "";
+ 	}
+}
