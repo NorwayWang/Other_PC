@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- 开启注解扫描，spring会自动去扫描base-package下面的包或者包下面所有子包，
+		如果扫描到有spring的相关注解类，就把这些类注册为spring的bean -->
+    <context:component-scan base-package="com.wml"/>
+    
+	<!--  配置annotation(注解)类型的处理映射器 -->
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+	
+	<!-- 配置annotation(注解)类型的处理器适配器-->
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/>
+	
+	<!-- 视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver"/>
+	
+	
+	<!-- 由于使用了注解，因此不需要再配置文件里使用xml来描述bean。配置一个annotation
+		类型的处理器映射器RequestMappingHandlerMapping，它将根据请求查找映射。配置
+		annotation类型的处理器适配器RequestMappingHandlerAdapter，来完成对HelloController类的
+		@RequestMapping标注的方法的调用。最后配置视图解析器 InternalResourceViewResolver来将
+		View呈现出来-->
+
+</beans>
