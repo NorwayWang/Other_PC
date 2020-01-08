@@ -1,0 +1,26 @@
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                      http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1" metadata-complete="true">
+  <display-name>Archetype Created Web Application</display-name>
+  <!--配置前端控制器-->
+  <servlet>
+    <!--当前servlet名称-->
+    <servlet-name>dispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!--当前servl参数信息-->
+    <init-param>
+      <!--contextConfigLocation是参数名，该参数值包含SpringMVC配置文件路径-->
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:springmvc.xml</param-value>
+    </init-param>
+    <!--该配置作用是当web应用启动时立即加载servlet-->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <!--将所有以.do结尾的请求都映射到dispatcherServlet进行处理-->
+  <servlet-mapping>
+    <servlet-name>dispatcherServlet</servlet-name>
+    <url-pattern>*.do</url-pattern>
+  </servlet-mapping>
+</web-app>
