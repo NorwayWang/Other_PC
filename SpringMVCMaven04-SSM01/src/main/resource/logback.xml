@@ -6,7 +6,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
         <!--指定日志打印的编码格式-->
-        <param name="Encoding" value="UTF-8" />
+        <charset>UTF-8</charset>
     </appender>
 
     <root level="debug">
