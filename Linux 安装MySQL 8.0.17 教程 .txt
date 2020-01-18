@@ -1,0 +1,93 @@
+##Linux 安装MySQL 8.0.17 教程 ##
+
+1. 下载MySQL 压缩包
+
+2. 准备
+
+cd 到下载的目录
+
+解压： tar -xvf mysql-8.0.17-linux-glibc2.12-x86_64.tar.xz
+
+可选复制： cp -rf mysql-8.0.17-linux-glibc2.12-x86_64 /home/ageng/mysql
+
+注意：/home/ageng/mysql 是本用户的目录所以不需要赋权限，如果是/usr/local/或者其他非本用户权限目录需要赋权限
+
+3. 添加默认配置文件
+
+vim /etc/my.cnf （没有权限执行 sudo vim /etc/my.cnf）
+
+ctrl + q 解锁终端
+
+写入以下代码
+
+[client]
+
+port=3306
+
+socket=/tmp/mysql/mysql.sock
+
+
+
+[mysqld]
+
+port=3306
+
+user=mysql
+
+socket=/tmp/mysql/mysql.sock
+
+basedir=/home/ageng/mysql
+
+datadir=/home/ageng/mysql/data
+
+log-error=error.log
+
+pid-file = mysql.pid
+
+Esc 键 退出编辑
+
+执行 :wq 保存并退出
+
+注意：socket 的路径中目录必须存在 否组mysql 启动服务会报错;basedir、datadir 根据自己实际路径
+
+4. 创建组用户 *可选
+
+创建 mysql 组：groupadd mysql
+
+创建 mysql 用户：useradd -r -g mysql mysql
+
+更改目录权限：chown -R mysql:mysql /tmp/mysql
+
+5. 安装
+
+cd到mysql/bin目录执行 ./mysqld --initialize --user=mysql -- basedir=/home/ageng/mysql/ --datadir=/home/ageng/mysql/data/
+
+注意：basedir、datadir 根据自己实际路径
+
+6. 启动关闭 mysql 服务
+
+cd 到mysql/support-file目录执行
+
+打开服务： ./mysql.server start
+
+关闭服务： ./mysql.server stop
+
+7. 修改初始密码
+
+mysql initialize 后会生成初始密码；如果忘记在 mysql/data/error.log文件会有记录日志
+
+进入 mysql 命令行：mysql -u root -p
+
+输入密码：××××××
+
+修改初试密码：ALTER USER 'root'@'localhost' IDENTIFIED BY '新密码';
+
+
+
+8.注意
+
+（1）：2019-09-07T16:44:46.328568Z mysqld_safe Directory '/tmp/mysql' for UNIX sock
+
+（2）：ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+
+如果安装时报以上两种错误请检查my.cnf文件中socket路径目录是否都存在，不存在需要新建

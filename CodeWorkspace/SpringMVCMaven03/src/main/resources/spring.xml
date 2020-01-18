@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"  
+	xmlns:jee="http://www.springframework.org/schema/jee" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd" >
+        
+        <!-- 开启注解扫描，spring会自动扫描base-package下的包或包下面的所有子包，
+        	如果扫描到有spring相关的注解类，就把这个类注册为spring的bean-->
+        <context:component-scan base-package="com.wml"/>
+        
+        <!--  配置annotation(注解)类型的处理映射器 -->
+		<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+		
+		<!-- 配置annotation(注解)类型的处理器适配器-->
+		<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/>
+        
+        <!-- 定义视图解析器 -->
+        <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        	<!-- 前缀 -->
+        	<property name="prefix" value="/WEB-INF/page/"/>
+        	<!-- 后缀 -->
+        	<property name="suffix" value=".jsp"/>
+        </bean>
+        
+        <!-- 注意此处没有配置处理映射器和处理器适配器 ，当用户没有配置这两项时，spring会
+        	使用默认的处理映射器和处理器适配器处理请求-->
+</beans>
